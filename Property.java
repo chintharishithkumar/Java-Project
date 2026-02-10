@@ -1,98 +1,73 @@
-package javaproject2;
-public class Property {
+package javaproject3;
 
-	  private int pid;
-	  private String paddress;
-	  private double price;
-	  
-	  static String agencyname = "Laksh Real Estate";
-	  static double baseCommissionPercent = 0.02;
-	  
-	  
+import java.io.*;
+import java.util.Scanner;
 
-	  public Property(int pid, String paddress) {
-	    this.pid = pid;
-	    this.paddress = paddress;
-	    this.price = 0;
-	  }
+public abstract class Property implements Commissionable {
+    protected int pid;
+    protected String paddress;
+    protected double price;
 
-	  public Property(int pid, String paddress, double price) {
-	    this.pid = pid;
-	    this.paddress = paddress;
-	    this.price = price;
-	  }
+    protected static String agencyName;
+    protected static double baseCommissionPercent;
 
-	  public double calculateCommission() {
-	    return (Property.baseCommissionPercent) * (this.price) / 100;
-	  }
+    static {
+        agencyName = "Laksh Real Estate";
+        baseCommissionPercent = 2.0; // 2%
+    }
 
-	  int comparePrice(Property other) {
-	      if (other == null) {
-	          return this.pid;
-	      }
-	      if (this.price >= other.price) {
-	          return this.pid;
-	      } else {
-	          return other.pid;
-	      }
-	  }
-	  double calculatePrice(double brokerCommissionPercent) {
-	      double totalPercent = baseCommissionPercent + brokerCommissionPercent;
-	      double commissionAmount = price * totalPercent / 100.0;
-	      return price + commissionAmount;
-	  }
-	  public static double minPrice(Property[] properties) {
-		  if(properties == null || properties.length ==0) {
-			  return 0.0;
-		  }
-		  int index = 0;
-		  while(index < properties.length && properties[index] == null) {
-			  index++;
-		  }
-		  if(index == properties.length) {
-			  return 0.0;
-		  }
-	  
-	  double min = properties[index].price;
+    public Property() {}
 
-	  for (int i = index + 1; i < properties.length; i++) {
-	      if (properties[i] != null && properties[i].price < min) {
-	          min = properties[i].price;
-	      }
-	  }
-	  return min;
-	}
-	  public static int minPriceid(Property[] properties) {
-		  if(properties == null || properties.length ==0) {
-			  return 0;
-		  }
-		  int index = 0;
-		  while(index < properties.length && properties[index] == null) {
-			  index++;
-		  }
-		  if(index == properties.length) {
-			  return 0;
-		  }
-	  
-	  double min = properties[index].price;
-	  int minpid = properties[index].pid;
+    public Property(int pid, String paddress, double price) throws InvalidPriceException {
+        if (price <= 0) {
+            throw new InvalidPriceException("Price must be greater than zero.");
+        }
+        this.pid = pid;
+        this.paddress = paddress;
+        this.price = price;
+    }
 
-	  for (int i = index + 1; i < properties.length; i++) {
-	      if (properties[i] != null && properties[i].price < min) {
-	          min = properties[i].price;
-	          minpid = properties[i].pid;
-	      }
-	  }
-	  return minpid;
-	}
-	  public void display() {
-	    System.out.println("Property ID: " + this.pid);
-	    System.out.println("Property Address: " + this.paddress);
-	    System.out.println("Price: " + this.price);
+    // Accept Scanner from Main
+    public void input(Scanner sc) {
+        try {
+            System.out.print("Enter Property ID: ");
+            this.pid = sc.nextInt();
+            sc.nextLine(); // consume newline
 
-	    double comm = (Property.baseCommissionPercent) * (this.price) / 100;
-	    System.out.printf("Commission is %.2f", comm);
-	  }
-	  }
+            System.out.print("Enter Property Address: ");
+            this.paddress = sc.nextLine();
 
+            System.out.print("Enter Property Price: ");
+            double tempPrice = sc.nextDouble();
 
+            if (tempPrice <= 0) {
+                throw new InvalidPriceException("Price cannot be negative or zero.");
+            }
+            this.price = tempPrice;
+
+        } catch (InvalidPriceException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Invalid input. Please try again.");
+            sc.nextLine(); // clear buffer
+        }
+    }
+
+    public void display() {
+        System.out.println("\n--- Property Details ---");
+        System.out.println("Agency: " + agencyName);
+        System.out.println("Property ID: " + pid);
+        System.out.println("Address: " + paddress);
+        System.out.println("Price: " + price);
+        System.out.printf("Commission: %.2f\n", calculateCommission());
+    }
+
+    public void saveToFile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("properties.txt", true))) {
+            writer.write(pid + "," + paddress + "," + price + "," + calculateCommission());
+            writer.newLine();
+        } catch (IOException e) {
+            System.out.println("Error writing to file: " + e.getMessage());
+        }
+    }
+}
